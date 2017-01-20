@@ -1,0 +1,63 @@
+# Running the following as <root> user
+
+# Search for available python development library
+searcch python | grep -i devel
+
+# Install python development libraries
+yum  install python-devel.x86_64
+
+# Install unix ODBC development package
+yum install unixODBC-devel
+
+# Install pyodbc
+wget https://pypi.python.org/packages/9c/6f/27ffd47f56226e572bb8cf06a8355d8ed875b49b8317e73a95c20fb599d1/pyodbc-3.0.10.tar.gz#md5=3f6f205c979a0fe5dee05d37121a7b92
+
+tar -xvf pyodbc-3.0.10.tar.gz
+cd pyodbc-3.0.10 
+python setup.py build 
+python setup.py install
+
+# Vertica client installation
+# This install connector and VSQL
+mount -t vboxsf software /root/software
+cp /root/software/vertica-7.0.2-1.x86_64.RHEL5.rpm /root
+rpm -Uvh vertica-7.0.2-1.x86_64.RHEL5.rpm
+
+# Verify file /etc/vertica.ini with the contents:
+# [Driver]
+# ErrorMessagesPath = /opt/vertica/lib64
+# ODBCInstLib = /usr/lib64/libodbcinst.so
+# DriverManagerEncoding = UTF-16
+
+# Other ini’s to give a look
+# /etc/odbc.ini
+# /etc/odbcinst.ini
+
+# Test VSQL
+which VSQL
+
+
+# Test installation
+python
+#>>> import pyodbc
+
+# local database
+#>>> cnxn = pyodbc.connect('DRIVER={Vertica};SERVER=192.168.183.128;PORT=5433;DATABASE=Analytics;UID=oii_etl;PWD=oii@ctg_ty15')
+
+# production
+#>>> cnxn = pyodbc.connect('DRIVER={Vertica};SERVER=pprddaavth-vip.ie.intuit.net;PORT=5433;DATABASE=Analytics;UID=rnewton2;PWD=Intuit.4532')
+
+#>>> cursor = cnxn.cursor()
+#>>> sql="select version();"
+#>>> cursor.execute(sql)
+#>>> rows=cursor.fetchall()
+#>>> for row in rows:
+#>>>     print row
+#>>> 
+#(u'Vertica Analytic Database v7.0.1-0', )
+
+
+
+
+
+

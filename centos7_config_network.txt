@@ -1,0 +1,143 @@
+
+# Create VBox VM
+####################################
+# From host VBox GUI:
+# Create New:
+# Guest: <new_hostname>
+# Mem: 4096
+# Drive; 25GB
+# Centos Setup
+# Installation Destination
+# Select VBox Harddisk -> I will configure partiioning -> Done
+# Create Automatically
+# Manual Partitioning
+# Disk: EXT4 on all partitions
+# User: <root user only> Pw: <pw>
+# Network:
+# Adapater1: NAT
+# Adapater2: Host-Only
+#
+# Start VM
+#####################################
+
+# Network Config
+# Use network utility to show active interfaces and make note of UUID for network config files
+
+# nmcli con show
+
+# vi /etc/sysconfig/network-scripts/ifcfg-enp0s3
+DEVICE=enp0s3
+TYPE=Ethernet
+BOOTPROTO=dhcp
+DEFROUTE="yes"
+PEERDNS="yes"
+PEERROUTES="yes"
+NAME=enp0s3
+UUID=5413d5a4-fe45-4fcc-a3bd-57141183dc58
+ONBOOT=yes
+
+# vi /etc/sysconfig/network-scripts/ifcfg-enp0s8
+DEVICE=enp0s8
+TYPE=Ethernet 
+#BOOTPROTO=dhcp
+BOOTPROTO=static
+PADDR=192.168.56.11
+NETMASK=255.255.255.0
+HWADDR=08:00:27:0A:C2:F1
+DEFROUTE=yes 
+PEERDNS=yes
+PEERROUTES=yes 
+IPV4_FAILURE_FATAL=no
+IPV6INIT=no
+NAME=enp0s8
+UUID=6c559ed1-7e67-4ea8-861c-39a424c6e9c4
+ONBOOT=yes
+
+# vi /etc/sysconfig/network
+NETWORKING=yes     # this change does not seem necessary
+
+# set hostname
+echo $HOSTNAME
+localhost.localhost
+
+# vi /etc/hostname
+<new_hostname>         # change to desired hostname
+:w!
+
+# Restart network service
+service network restart
+
+# Verify IP address for Host-Only
+ip addr
+
+# Test SSH
+#############################
+# From Host:
+# Flush any local ssh keys
+$ ssh-keygen -R 192.168.56.12
+$ ssh root@192.168.56.12
+#############################
+
+# Update OS
+yum -y update
+
+# Install preferred editor
+yum install nano
+
+# Pre-reqs for VirtualBox Guest Additions
+rpm -Uvh https://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-8.noarch.rpm
+yum install gcc kernel-devel kernel-headers dkms make bzip2 perl
+uname -r
+3.10.0-327.el7.x86_64
+
+KERN_DIR=/usr/src/kernels/3.10.0-327.el7.x86_64
+# verify variable contents
+echo $KERN_DIR
+
+# Install Kernel Dev  (if needed as directed)
+yum install kernel-devel-3.10.0-327.el7.x86_64
+
+# Install VBox guest additions
+##################################
+# From Host VBox GUI: Device:
+#    Insert Guest Additions CD
+##################################
+
+mkdir /media/VirtualBoxGuestAdditions
+mount -r /dev/cdrom /media/VirtualBoxGuestAdditions
+
+cd /media/VirtualBoxGuestAdditions 
+
+./VBoxLinuxAdditions.run
+
+mkdir git
+# Verify folder in /root
+pwd
+
+# Add user to the users group vboxsf and shutdown
+sudo usermod -aG vboxsf root
+shutdown now
+
+# Setup shared folder
+######################################
+# From host VBox GUI:  SharedFolders:
+# Add FolderPath <other>: /Users/tborgstadt/git
+# FolderName: git
+# Auto-mount: no
+######################################
+
+# Start Guest and Login
+# Verify can mount the shared folder manually
+mount -t vboxsf git /root/git
+cd git
+ls        # are git folders there?
+
+Mount the folder at boot time by adding the following entry to fstab (https://wiki.archlinux.org/index.php/VirtualBox )
+vi /etc/fstab
+# Append the following line:
+# git  /root/git  vboxsf  uid=0,gid=0,rw,dmode=700,fmode=600,comment=systemd.automount  0  0
+
+reboot now
+
+# Connect, login, and verify sharedfolder
+# May need to adjust dir and file permissions in fstab based on future requirements.
